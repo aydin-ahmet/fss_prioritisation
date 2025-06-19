@@ -8,9 +8,8 @@ Script to calculate priority scores for sampled 266 businesses
 """
 
 import pandas as pd
-import numpy as np
 
-path_to_universe_file = '...../universeConsolidated_400_202409.csv'
+path_to_universe_file = '...../universeConsolidated_266_202506.csv'
 
 # Read universe file
 universe = pd.read_csv(path_to_universe_file)
@@ -36,7 +35,11 @@ df = pd.merge(selection, cell_df, left_on='cell_no', right_index=True)
 
 ####### Calculate the priority score #######
 # Baseline
-df['score'] = df['weight']*df['Total Assets']
+df['base_score'] = df['weight']*df['Total Assets']
 
-# Logarithm of baseline score
-df['log_score'] = np.log(df['score']+1)
+#Rank-Based Normalization (Percentile Ranking)
+# Create groups by SIC and if they are from reference list or not
+df['group'] = df['frosic2007'].astype(str) + df['selmkr'].apply(lambda x: '_ref' if x == 'L' else '_noref')
+
+#Implement normalisation
+df['normalised_score'] = df.groupby('group')['base_score'].rank(pct=True)
